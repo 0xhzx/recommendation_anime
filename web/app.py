@@ -5,11 +5,14 @@ from sklearn.metrics.pairwise import cosine_similarity
 import pickle
 import requests
 
-# global vars
-anime_mapping = pd.read_csv('./data/anime_mapping.csv',index_col='anime_id')
-similarity = pd.read_csv('./data/csmatrix.csv',index_col='anime_id')
-titles = anime_mapping['Name'][0:20]
-print("Loading ends")
+@st.cache_data()
+def load_data():
+    # global vars
+    anime_mapping = pd.read_csv('./data/anime_mapping.csv',index_col='anime_id')
+    similarity = pd.read_csv('./data/small_csmatrix.csv',index_col='anime_id')
+    titles = anime_mapping['Name'][20:50]
+    print("Loading ends")
+    return anime_mapping, similarity, titles
 
 
 def fetch_poster(anime_id):
@@ -19,73 +22,72 @@ def fetch_poster(anime_id):
     return full_path
 
 
-def recommender(anime):
+def recommender(anime, anime_mapping ,similarity):
     anime_index = anime_mapping[anime_mapping['Name'] == anime].index[0]
-    distance = similarity[anime_index]
+    print("anime index is:", anime_index)
+    distance = similarity.loc[anime_index]
     print("Start calculating")
-    anime_list = sorted(list(enumerate(distance)), reverse=True, key=lambda x: x[1])[1:11]
+    anime_list = sorted(list(enumerate(distance)), reverse=True, key=lambda x: x[1])[1:8]
     print(anime_list)
+    print("Search ends")
     anime_recommend = []
     anime_recommend_posters = []
     for i in anime_list:
-        anime_id = anime_mapping.iloc[i[0]]['anime_id']
-        anime_recommend.append(anime_mapping.iloc[i[0]]['Name'])
-        anime_recommend_posters.append(fetch_poster(anime_id))
+        anime_id = anime_mapping.loc[i[0]]['anime_id']
+        if anime_id in anime_mapping.index:
+            anime_recommend.append(anime_mapping.loc[i[0]]['Name'])
+            anime_recommend_posters.append(fetch_poster(anime_id))
 
     return anime_recommend, anime_recommend_posters
 
 
-st.set_page_config(layout="wide")
-hide_streamlit_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
-hide_decoration_bar_style = '''
-    <style>
-        header {visibility: hidden;}
-    </style>
-'''
-st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
+def main():
+    print("Start................")
+    anime_mapping, similarity, titles = load_data()
+    # anime_mapping, similarity, titles = {},[],{}
 
+    st.title('Anime Recommendation System')
+    selected_anime = st.selectbox('Type a Anime', options=titles)
+    if st.button('Recommend'):
+        recommended_anime_names, recommended_anime_posters = recommender(selected_anime, anime_mapping, similarity)
 
-st.title('Anime Recommendation System')
-selected_anime = st.selectbox('Type a Anime', options=titles)
-if st.button('Recommend'):
-    recommended_anime_names, recommended_anime_posters = recommender(selected_anime)
+        # Display the recommended anime
+        size = len(recommended_anime_names)
+        col1, col2, col3, col4, col5 = st.columns(size)
+        idx = 0
+        with col1:
+            st.text(recommended_anime_names[idx])
+            st.image(recommended_anime_posters[idx])
+        with col2:
+            idx += 1
+            st.text(recommended_anime_names[idx])
+            st.image(recommended_anime_posters[idx])
+        with col3:
+            idx += 1
+            st.text(recommended_anime_names[idx])
+            st.image(recommended_anime_posters[idx])
+        with col4:
+            idx += 1
+            st.text(recommended_anime_names[idx])
+            st.image(recommended_anime_posters[idx])
+        with col5:
+            idx += 1
+            st.text(recommended_anime_names[idx])
+            st.image(recommended_anime_posters[idx])
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.text(recommended_anime_names[0])
-        st.image(recommended_anime_posters[0])
-    with col2:
-        st.text(recommended_anime_names[1])
-        st.image(recommended_anime_posters[1])
-    with col3:
-        st.text(recommended_anime_names[2])
-        st.image(recommended_anime_posters[2])
-    with col4:
-        st.text(recommended_anime_names[3])
-        st.image(recommended_anime_posters[3])
-    with col5:
-        st.text(recommended_anime_names[4])
-        st.image(recommended_anime_posters[4])
-
-    col6, col7, col8, col9, col10 = st.columns(5)
-    with col6:
-        st.text(recommended_anime_names[5])
-        st.image(recommended_anime_posters[5])
-    with col7:
-        st.text(recommended_anime_names[6])
-        st.image(recommended_anime_posters[6])
-    with col8:
-        st.text(recommended_anime_names[7])
-        st.image(recommended_anime_posters[7])
-    with col9:
-        st.text(recommended_anime_names[8])
-        st.image(recommended_anime_posters[8])
-    with col10:
-        st.text(recommended_anime_names[9])
-        st.image(recommended_anime_posters[9])
+if __name__ == '__main__':
+    st.set_page_config(layout="wide")
+    hide_streamlit_style = """
+                <style>
+                #MainMenu {visibility: hidden;}
+                footer {visibility: hidden;}
+                </style>
+                """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+    hide_decoration_bar_style = '''
+        <style>
+            header {visibility: hidden;}
+        </style>
+    '''
+    st.markdown(hide_decoration_bar_style, unsafe_allow_html=True)
+    main()
