@@ -8,7 +8,7 @@ import requests
 @st.cache_data()
 def load_data():
     # global vars
-    anime_mapping = pd.read_csv('./data/anime_mapping.csv',index_col='anime_id')
+    anime_mapping = pd.read_csv('./data/anime_mapping.csv')
     similarity = pd.read_csv('./data/small_csmatrix.csv',index_col='anime_id')
     titles = anime_mapping['Name'][20:50]
     print("Loading ends")
@@ -23,22 +23,31 @@ def fetch_poster(anime_id):
 
 
 def recommender(anime, anime_mapping ,similarity):
-    anime_index = anime_mapping[anime_mapping['Name'] == anime].index[0]
+    anime_index = anime_mapping[anime_mapping['Name'] == anime]['anime_id'].values[0]
     print("anime index is:", anime_index)
     distance = similarity.loc[anime_index]
     print("Start calculating")
-    anime_list = sorted(list(enumerate(distance)), reverse=True, key=lambda x: x[1])[1:8]
+    # anime_list = sorted(list(enumerate(distance)), reverse=True, key=lambda x: x[1])[1:8]
+    anime_list = distance.sort_values(ascending=False).index.values[1:6]
     print(anime_list)
     print("Search ends")
     anime_recommend = []
-    anime_recommend_posters = []
-    for i in anime_list:
-        anime_id = anime_mapping.loc[i[0]]['anime_id']
-        if anime_id in anime_mapping.index:
-            anime_recommend.append(anime_mapping.loc[i[0]]['Name'])
-            anime_recommend_posters.append(fetch_poster(anime_id))
+    # anime_recommend_posters = []
+    anime_recommend_genres = []
+    for anime_id in anime_list:
+        anime_id = int(anime_id)
+        # print("add anime id:", anime_id)
+        anime_recommend.append(anime_mapping[anime_mapping['anime_id'] == anime_id]['Name'].values[0])
+        anime_recommend_genres.append(anime_mapping[anime_mapping['anime_id']== anime_id]['Genres'].values[0])
+        # anime_recommend_posters.append([])
+        # anime_recommend_posters.append(fetch_poster(anime_id))
 
-    return anime_recommend, anime_recommend_posters
+    return anime_recommend, anime_recommend_genres
+
+def create_genre_tags(genre_string):
+    genres = genre_string.split(', ')
+    colored_genres = [f'<span style="color: #{hash(genre) % 0xFFFFFF:06x};">{genre}</span>' for genre in genres]
+    return ' '.join(colored_genres)
 
 
 def main():
@@ -49,31 +58,19 @@ def main():
     st.title('Anime Recommendation System')
     selected_anime = st.selectbox('Type a Anime', options=titles)
     if st.button('Recommend'):
-        recommended_anime_names, recommended_anime_posters = recommender(selected_anime, anime_mapping, similarity)
+        recommended_anime_names, recommended_anime_genres = recommender(selected_anime, anime_mapping, similarity)
 
         # Display the recommended anime
         size = len(recommended_anime_names)
-        col1, col2, col3, col4, col5 = st.columns(size)
-        idx = 0
-        with col1:
-            st.text(recommended_anime_names[idx])
-            st.image(recommended_anime_posters[idx])
-        with col2:
-            idx += 1
-            st.text(recommended_anime_names[idx])
-            st.image(recommended_anime_posters[idx])
-        with col3:
-            idx += 1
-            st.text(recommended_anime_names[idx])
-            st.image(recommended_anime_posters[idx])
-        with col4:
-            idx += 1
-            st.text(recommended_anime_names[idx])
-            st.image(recommended_anime_posters[idx])
-        with col5:
-            idx += 1
-            st.text(recommended_anime_names[idx])
-            st.image(recommended_anime_posters[idx])
+        columns = st.columns(size)
+
+        for i, col in enumerate(columns):
+            with col:
+                st.markdown(f"**{recommended_anime_names[i]}**")
+                # use Markdown show color label
+                genre_tags_html = create_genre_tags(recommended_anime_genres[i])
+                st.markdown(genre_tags_html, unsafe_allow_html=True)
+
 
 if __name__ == '__main__':
     st.set_page_config(layout="wide")

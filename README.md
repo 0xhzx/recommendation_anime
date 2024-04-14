@@ -29,3 +29,7 @@ The content-based filtering approach is to get predicted rating for a user-anime
 
 
 ### Model Evaluation
+
+
+### Web Interface
+![alt text](./images/image.png)
