@@ -23,7 +23,7 @@ Our project aims to recommend anime based on anime's info and users' preferences
 The naive approach is to recommend the top k anime based on genre and scores. Users are allowed to input the genre they want to watch and the system would return the top k anime with the input genre with the highest scores. The score feature was already used in the dataset.
 
 #### 2. Machine Learning Approach (Content-based filtering)
-
+The content-based filtering approach is to get predicted rating for a user-anime pair, and it can also generate top k animes recommendation for a certain user in our database. We use 20 percent of the dataset as the test set to test the accuracy of predicting ratings for a given user-anime pair. The final RMSE for the model is 1.797.
 
 #### 3. Deep Learning Approach (NCF - Neural Network-based Collaborative Filtering)
 
