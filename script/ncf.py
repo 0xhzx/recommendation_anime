@@ -12,7 +12,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-import matplotlib.pyplot as plt
 
 class NNHybridFiltering(nn.Module):
 
@@ -112,10 +111,10 @@ def load_data():
 
     # Load data
     ratings = pd.read_csv(os.path.join(datapath,'df_filtered_data.csv'))
+    onehot_encode_map = pd.read_csv(os.path.join(datapath,'genres_vectorized.csv'))
     ratings = pd.merge(ratings, onehot_encode_map, on='anime_id', how='left')
     ratings.drop(['watching_status','watched_episodes'],axis=1,inplace=True)
 
-    onehot_encode_map = pd.read_csv(os.path.join(datapath,'genres_vectorized.csv'))
     return ratings, onehot_encode_map
 
 def split_data(ratings):
@@ -130,7 +129,7 @@ def split_data(ratings):
     # Split our training data into training and validation sets
     X_train, X_val, y_train, y_val = train_test_split(X_train,y_train,random_state=0, test_size=0.2)
 
-    return X_train, X_val, X_test, y_train, y_val, y_test
+    return X, y, X_train, X_val, X_test, y_train, y_val, y_test
 
 
 def prep_dataloaders(X_train,y_train,X_val,y_val,batch_size):
@@ -172,11 +171,14 @@ def generate_recommendations(animes,X,model,userId,device):
         pred = predict_rating(model,userId,anime,genre, device)
         pred_ratings.append(pred.detach().cpu().item())
     # Sort animes by predicted rating
+    # print(pred_ratings)
     idxs = np.argsort(np.array(pred_ratings))[::-1]
     recs = animes.iloc[idxs]['MAL_ID'].values.tolist()
     # Filter out animes already watched by user
     animes_watched = X.loc[X['user_id']==userId, 'anime_id'].tolist()
+    # print(animes_watched)
     recs = [rec for rec in recs if not rec in animes_watched]
+    # print(recs)
     # Filter to top 10 recommendations
     recs = recs[:10]
     # Convert movieIDs to titles
@@ -189,11 +191,8 @@ def generate_recommendations(animes,X,model,userId,device):
 if __name__ == '__main__':
     # Load data
     ratings, onehot_encode_map = load_data()
+    X, y, X_train, X_val, X_test, y_train, y_val, y_test = split_data(ratings)
     
-    # Get the predicted rating for a random user-item pair
-    rating = predict_rating(model,userId=34,animeId=10,genre=X_test.loc[(X_test['user_id'] == 260755) & (X_test['anime_id'] == 5204), X_test.columns[2:]], device=device)
-    print('Predicted rating is {:.1f}'.format(rating.detach().cpu().item()))
-
     batchsize = 64
     trainloader,valloader = prep_dataloaders(X_train,y_train,X_val,y_val,batchsize)
 
@@ -216,6 +215,9 @@ if __name__ == '__main__':
     n_epochs=2
     wd=1e-3
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
 
     cost_paths = train_model(model,criterion,optimizer,dataloaders, device,n_epochs, scheduler=None)
+    # Get the predicted rating for a random user-item pair
+    rating = predict_rating(model,userId=34,animeId=10,genre=X_test.loc[(X_test['user_id'] == 260755) & (X_test['anime_id'] == 5204), X_test.columns[2:]], device=device)
+    print('Predicted rating is {:.1f}'.format(rating.detach().cpu().item()))
