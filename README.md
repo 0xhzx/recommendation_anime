@@ -7,7 +7,7 @@ Our project aims to recommend anime based on anime's info and users' preferences
 
 2. Content-based filtering: We will use the anime's features genre to recommend similar anime based on the user's preference.
 
-3. Neural network-based Collaborative filtering: 
+3. Neural network-based Collaborative filtering: We use the user_id and anime_id as our model's input, and we can get a predicted ratings list, then we choose top k animes from this list.
 
 ## Feature
 - Collected a comprehensive dataset of anime from Kaggle, including anime title, genre, type, episodes, score, rating, etc. as well as user ratings for each anime.
@@ -30,6 +30,8 @@ The content-based filtering approach is to get predicted rating for a user-anime
 The NCF model typically consists of two parts: User Embedding and Item Embedding. User Embedding and Item Embedding represent the features of users and items by mapping them into low-dimensional vectors in space. These vectors are input into a neural network, which combines them to generate recommendation results.
 
 The NCF model usually includes multiple hidden layers and activation functions to learn the nonlinear relationships between users and items. The model can adopt different neural network architectures, such as Fully Connected Neural Networks (FCN) or Multi-Layer Perceptrons (MLP), to adapt to various recommendation tasks and datasets.
+
+In our task, we firstly use one-hot-encode to encode all 47 genres in the dataset, then we build a deep neural network based on the original NCF network and revised it(remove the original nn.Embedding and add nn.Linear layer).
 
 The training process is showed in the following image:
 
