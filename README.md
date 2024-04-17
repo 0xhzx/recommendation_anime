@@ -27,9 +27,21 @@ The content-based filtering approach is to get predicted rating for a user-anime
 
 #### 3. Deep Learning Approach (NCF - Neural Network-based Collaborative Filtering)
 
+The NCF model typically consists of two parts: User Embedding and Item Embedding. User Embedding and Item Embedding represent the features of users and items by mapping them into low-dimensional vectors in space. These vectors are input into a neural network, which combines them to generate recommendation results.
 
+The NCF model usually includes multiple hidden layers and activation functions to learn the nonlinear relationships between users and items. The model can adopt different neural network architectures, such as Fully Connected Neural Networks (FCN) or Multi-Layer Perceptrons (MLP), to adapt to various recommendation tasks and datasets.
+
+The training process is showed in the following image:
+
+![training process](./images/training_process.png)
 ### Model Evaluation
 
+Get the most similar anime for the current anime among all animes in the history and use the rating for that anime as the final rating for the predicted anime.
+
+| model | RMSE |
+|-------|-------|
+| Neural Network-based Collaborative Filtering | 1.281 |
+| Content-based filtering | 1.797 |
 
 ### Web Interface
 ![alt text](./images/image.png)
